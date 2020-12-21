@@ -1,11 +1,8 @@
 flask
 pillow
 requests[socks]
-gunicorn[gevent]
-wand
-blinker
-moviepy
 numpy
-keras
 scipy
-tensorflow
+moviepy
+Wand
+gunicorn[gevent]

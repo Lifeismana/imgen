@@ -1,7 +1,7 @@
 import shutil
 import subprocess
 
-executable = str(shutil.which('python3.6') or shutil.which('py')).split('/')[-1]
+executable = str(shutil.which('python3.8') or shutil.which('py')).split('/')[-1]
 
 
 def test_flake8():
