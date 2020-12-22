@@ -37,36 +37,41 @@ def render_dream(avatar):
 
     def deprocess_image(x):
         # Util function to convert a tensor into a valid image.
-        if K.image_data_format() == 'channels_first':
+        if K.image_data_format() == "channels_first":
             x = x.reshape((3, x.shape[2], x.shape[3]))
             x = x.transpose((1, 2, 0))
         else:
             x = x.reshape((x.shape[1], x.shape[2], 3))
-        x /= 2.
+        x /= 2.0
         x += 0.5
-        x *= 255.
-        x = np.clip(x, 0, 255).astype('uint8')
+        x *= 255.0
+        x = np.clip(x, 0, 255).astype("uint8")
         return x
 
     def resize_img(img, size):
         img = np.copy(img)
-        if K.image_data_format() == 'channels_first':
-            factors = (1, 1,
-                       float(size[0]) / img.shape[2],
-                       float(size[1]) / img.shape[3])
+        if K.image_data_format() == "channels_first":
+            factors = (
+                1,
+                1,
+                float(size[0]) / img.shape[2],
+                float(size[1]) / img.shape[3],
+            )
         else:
-            factors = (1,
-                       float(size[0]) / img.shape[1],
-                       float(size[1]) / img.shape[2],
-                       1)
+            factors = (
+                1,
+                float(size[0]) / img.shape[1],
+                float(size[1]) / img.shape[2],
+                1,
+            )
         return scipy.ndimage.zoom(img, factors, order=1)
 
     settings = {
-        'features': {
-            'mixed2': randint(1, 5) / 10,
-            'mixed3': randint(1, 10) / 10,
-            'mixed4': randint(1, 20) / 10,
-            'mixed5': randint(1, 50) / 10,
+        "features": {
+            "mixed2": randint(1, 5) / 10,
+            "mixed3": randint(1, 10) / 10,
+            "mixed4": randint(1, 20) / 10,
+            "mixed5": randint(1, 50) / 10,
         },
     }
     K.set_learning_phase(0)
@@ -76,7 +81,7 @@ def render_dream(avatar):
     # model = inception_v3.InceptionV3(weights='imagenet',
     #                                include_top=False)
 
-    model = load_model('model.hdf5', compile=False)
+    model = load_model("model.hdf5", compile=False)
 
     dream = model.input
 
@@ -84,19 +89,19 @@ def render_dream(avatar):
     layer_dict = dict([(layer.name, layer) for layer in model.layers])
 
     # Define the loss.
-    loss = K.variable(0.)
-    for layer_name in settings['features']:
+    loss = K.variable(0.0)
+    for layer_name in settings["features"]:
         # Add the L2 norm of the features of a layer to the loss.
         if layer_name not in layer_dict:
-            raise ValueError('Layer ' + layer_name + ' not found in model.')
-        coeff = settings['features'][layer_name]
+            raise ValueError("Layer " + layer_name + " not found in model.")
+        coeff = settings["features"][layer_name]
         x = layer_dict[layer_name].output
         # We avoid border artifacts by only involving non-border pixels in the loss.
-        scaling = K.prod(K.cast(K.shape(x), 'float32'))
-        if K.image_data_format() == 'channels_first':
-            loss += coeff * K.sum(K.square(x[:, :, 2: -2, 2: -2])) / scaling
+        scaling = K.prod(K.cast(K.shape(x), "float32"))
+        if K.image_data_format() == "channels_first":
+            loss += coeff * K.sum(K.square(x[:, :, 2:-2, 2:-2])) / scaling
         else:
-            loss += coeff * K.sum(K.square(x[:, 2: -2, 2: -2, :])) / scaling
+            loss += coeff * K.sum(K.square(x[:, 2:-2, 2:-2, :])) / scaling
 
     # Compute the gradients of the dream wrt the loss.
     grads = K.gradients(loss, dream)[0]
@@ -112,10 +117,10 @@ def render_dream(avatar):
     num_octave = 3  # Number of scales at which to run gradient ascent
     octave_scale = 1.4  # Size ratio between scales
     iterations = 20  # Number of ascent steps per scale
-    max_loss = 10.
+    max_loss = 10.0
 
     img = preprocess_image(avatar)
-    if K.image_data_format() == 'channels_first':
+    if K.image_data_format() == "channels_first":
         original_shape = img.shape[2:]
     else:
         original_shape = img.shape[1:3]
@@ -129,10 +134,7 @@ def render_dream(avatar):
 
     for shape in successive_shapes:
         img = resize_img(img, shape)
-        img = gradient_ascent(img,
-                              iterations=iterations,
-                              step=step,
-                              max_loss=max_loss)
+        img = gradient_ascent(img, iterations=iterations, step=step, max_loss=max_loss)
         upscaled_shrunk_original_img = resize_img(shrunk_original_img, shape)
         same_size_original = resize_img(original_img, shape)
         lost_detail = same_size_original - upscaled_shrunk_original_img

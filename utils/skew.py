@@ -13,13 +13,15 @@ def find_coeffs(source_coords, target_coords):
     return numpy.array(res).reshape(8)
 
 
-def skew(img, target_cords: list, source_coords: list=None, resolution: int=1024):
+def skew(img, target_cords: list, source_coords: list = None, resolution: int = 1024):
     # [(top_left), (top_right), (bottom_right), (bottom_left)]
     if source_coords:
         coeffs = find_coeffs(source_coords, target_cords)
     else:
-        coeffs = find_coeffs([(0, 0), (img.width, 0), (img.width, img.height), (0, img.height)], target_cords)
-    return img.transform((resolution, resolution), Image.PERSPECTIVE, coeffs,
-                          Image.BICUBIC)
-
-
+        coeffs = find_coeffs(
+            [(0, 0), (img.width, 0), (img.width, img.height), (0, img.height)],
+            target_cords,
+        )
+    return img.transform(
+        (resolution, resolution), Image.PERSPECTIVE, coeffs, Image.BICUBIC
+    )

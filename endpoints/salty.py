@@ -10,19 +10,19 @@ from utils.endpoint import Endpoint, setup
 
 @setup
 class Salty(Endpoint):
-    params = ['avatar0']
+    params = ["avatar0"]
 
     def generate(self, avatars, text, usernames, kwargs):
-        avatar = http.get_image(avatars[0]).convert('RGBA').resize((256, 256))
+        avatar = http.get_image(avatars[0]).convert("RGBA").resize((256, 256))
 
         salt = (
-            Image.open(self.assets.get('assets/salty/salt.bmp'))
-            .convert('RGBA')
+            Image.open("assets/salty/salt.bmp")
+            .convert("RGBA")
             .resize((256, 256))
             .rotate(-130, resample=Image.BICUBIC)
         )
 
-        blank = Image.new('RGBA', (256, 256))
+        blank = Image.new("RGBA", (256, 256))
         blank.paste(avatar, (0, 0), avatar)
         frames = []
 
@@ -36,7 +36,14 @@ class Salty(Endpoint):
             frames.append(base)
 
         b = BytesIO()
-        frames[0].save(b, save_all=True, append_images=frames[1:], format='gif', loop=0, duration=20,
-                       optimize=True)
+        frames[0].save(
+            b,
+            save_all=True,
+            append_images=frames[1:],
+            format="gif",
+            loop=0,
+            duration=20,
+            optimize=True,
+        )
         b.seek(0)
-        return send_file(b, mimetype='image/gif')
+        return send_file(b, mimetype="image/gif")

@@ -1,6 +1,6 @@
 from io import BytesIO
 
-from PIL import ImageDraw, Image
+from PIL import ImageDraw, Image, ImageFont
 from flask import send_file
 
 from utils import http
@@ -18,22 +18,33 @@ class Meme(Endpoint):
     Colors can be defined with HEX codes or web colors, e.g. black, white, orange etc. Try your luck ;)
     The default is Impact in white
     """
-    params = ['avatar0', 'top_text', 'bottom_text', 'color', 'font']
+
+    params = ["avatar0", "top_text", "bottom_text", "color", "font"]
 
     def generate(self, avatars, text, usernames, kwargs):  # pylint: disable=R0915
-        img = http.get_image(avatars[0]).convert('RGBA')
+        img = http.get_image(avatars[0]).convert("RGBA")
         factor = int(img.height / 10)
-        font = self.assets.get_font(f'assets/fonts/{kwargs.get("font", "impact")}.ttf', size=factor)
+        font = ImageFont.truetype(
+            f'assets/fonts/{kwargs.get("font", "impact")}.ttf', size=factor
+        )
         draw = ImageDraw.Draw(img)
-        color = kwargs.get('color', 'white')
+        color = kwargs.get("color", "white")
 
         def draw_text_with_outline(string, x, y):
             x = int(x)
             y = int(y)
-            render_text_with_emoji(img, draw, (x - 2, y - 2), string, font=font, fill=(0, 0, 0))
-            render_text_with_emoji(img, draw, (x + 2, y - 2), string, font=font, fill=(0, 0, 0))
-            render_text_with_emoji(img, draw, (x + 2, y + 2), string, font=font, fill=(0, 0, 0))
-            render_text_with_emoji(img, draw, (x - 2, y + 2), string, font=font, fill=(0, 0, 0))
+            render_text_with_emoji(
+                img, draw, (x - 2, y - 2), string, font=font, fill=(0, 0, 0)
+            )
+            render_text_with_emoji(
+                img, draw, (x + 2, y - 2), string, font=font, fill=(0, 0, 0)
+            )
+            render_text_with_emoji(
+                img, draw, (x + 2, y + 2), string, font=font, fill=(0, 0, 0)
+            )
+            render_text_with_emoji(
+                img, draw, (x - 2, y + 2), string, font=font, fill=(0, 0, 0)
+            )
             render_text_with_emoji(img, draw, (x, y), string, font=font, fill=color)
 
         def draw_text(string, pos):
@@ -79,7 +90,7 @@ class Meme(Endpoint):
                             next_cut -= 1
 
                     last_cut = next_cut
-                    lines.append(string[cut:next_cut + 1].strip())
+                    lines.append(string[cut : next_cut + 1].strip())
 
             else:
                 lines.append(string)
@@ -95,23 +106,27 @@ class Meme(Endpoint):
                 draw_text_with_outline(lines[i], x, y)
                 last_y = y
 
-        if kwargs.get('altstyle', 'null').lower() == 'true':
-            text_font = self.assets.get_font(f'assets/fonts/{kwargs.get("font", "arial")}.ttf', size=24)
-            text = wrap(text_font, kwargs.get('top_text', 'TOP TEXT'), img.width)
-            text_img = Image.new('RGB', (img.width, 10000), 'white')
+        if kwargs.get("altstyle", "null").lower() == "true":
+            text_font = ImageFont.truetype(
+                f'assets/fonts/{kwargs.get("font", "arial")}.ttf', size=24
+            )
+            text = wrap(text_font, kwargs.get("top_text", "TOP TEXT"), img.width)
+            text_img = Image.new("RGB", (img.width, 10000), "white")
             text_draw = ImageDraw.Draw(text_img)
             text_size = text_draw.textsize(text, text_font)
-            new_image = Image.new('RGB', (img.width, img.height + text_size[1] + 10), 'white')
+            new_image = Image.new(
+                "RGB", (img.width, img.height + text_size[1] + 10), "white"
+            )
             new_image.paste(img, (0, text_size[1] + 10))
             new_draw = ImageDraw.Draw(new_image)
-            new_draw.text((0, 0), text, kwargs.get('color', 'black'), text_font)
+            new_draw.text((0, 0), text, kwargs.get("color", "black"), text_font)
             img = new_image
 
         else:
-            draw_text(kwargs.get('top_text', 'TOP TEXT'), "top")
-            draw_text(kwargs.get('bottom_text', 'BOTTOM TEXT'), "bottom")
+            draw_text(kwargs.get("top_text", "TOP TEXT"), "top")
+            draw_text(kwargs.get("bottom_text", "BOTTOM TEXT"), "bottom")
 
         b = BytesIO()
-        img.save(b, format='png')
+        img.save(b, format="png")
         b.seek(0)
-        return send_file(b, mimetype='image/png')
+        return send_file(b, mimetype="image/png")

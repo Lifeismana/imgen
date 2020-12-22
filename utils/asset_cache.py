@@ -17,11 +17,11 @@ class AssetCache(object):
     def _run_gc(cache_obj):
         for key in list(cache_obj._cache):
             value = cache_obj._cache[key]
-            if value['expiry'] < time():
+            if value["expiry"] < time():
                 obj = cache_obj._cache.pop(key)
                 # noinspection PyBroadException
                 try:
-                    obj['data'].close()
+                    obj["data"].close()
                 except Exception:
                     pass
 
@@ -32,14 +32,14 @@ class AssetCache(object):
             self._last_gc = now
         if item in self._cache:
             c = self._cache[item]
-            c['expiry'] = now + self._expire_time
-            return c['data']
+            c["expiry"] = now + self._expire_time
+            return c["data"]
         else:
             obj = BytesIO()
-            with open(item, 'rb') as f:
+            with open(item, "rb") as f:
                 obj.write(f.read())
             obj.seek(0)
-            self._cache[item] = {'data': obj, 'expiry': now + self._expire_time}
+            self._cache[item] = {"data": obj, "expiry": now + self._expire_time}
             return obj
 
     def get(self, item):
@@ -47,30 +47,29 @@ class AssetCache(object):
 
     def get_font(self, item, *args, **kwargs):
         now = time()
-        cache_unique = "{}{}{}".format(hash(item), hash(args), hash(frozenset(kwargs.items())))
+        cache_unique = "{}{}{}".format(
+            hash(item), hash(args), hash(frozenset(kwargs.items()))
+        )
         if self._last_gc + self._gc_interval < now:
             self._gc_loop.call_soon_threadsafe(self._run_gc, self)
             self._last_gc = now
         if cache_unique in self._cache:
             c = self._cache[cache_unique]
-            c['expiry'] = now + self._expire_time
-            return c['data']
+            c["expiry"] = now + self._expire_time
+            return c["data"]
         else:
             obj = ImageFont.truetype(item, *args, **kwargs)
-            self._cache[item] = {'data': obj, 'expiry': now + self._expire_time}
+            self._cache[item] = {"data": obj, "expiry": now + self._expire_time}
             return obj
 
     def __contains__(self, item):
         return item in self._cache
 
     def __setitem__(self, key, value):
-        self._cache[key] = {
-            'data': value,
-            'expiry': time() + self._expire_time
-        }
+        self._cache[key] = {"data": value, "expiry": time() + self._expire_time}
 
     def expired_on(self, item):
-        return self._cache[item]['expiry']
+        return self._cache[item]["expiry"]
 
     def set(self, key, value):
         return self.__setitem__(key, value)

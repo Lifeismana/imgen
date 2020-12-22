@@ -11,21 +11,25 @@ from utils.endpoint import Endpoint, setup
 
 @setup
 class Dank(Endpoint):
-    params = ['avatar0']
+    params = ["avatar0"]
 
     def generate(self, avatars, text, usernames, kwargs):
-        avatar = http.get_image(avatars[0]).resize((320, 320)).convert('RGBA')
+        avatar = http.get_image(avatars[0]).resize((320, 320)).convert("RGBA")
 
-        horn = Image.open(self.assets.get('assets/dank/horn.bmp'))\
-            .convert('RGBA')\
-            .resize((100, 100))\
+        horn = (
+            Image.open("assets/dank/horn.bmp")
+            .convert("RGBA")
+            .resize((100, 100))
             .rotate(315, resample=Image.BICUBIC)
-        horn2 = ImageOps.mirror(horn.copy().resize((130, 130)).rotate(350, resample=Image.BICUBIC))
-        hit = Image.open(self.assets.get('assets/dank/hit.bmp')).convert('RGBA').resize((40, 40))
-        gun = Image.open(self.assets.get('assets/dank/gun.bmp')).convert('RGBA').resize((250, 205))
-        faze = Image.open(self.assets.get('assets/dank/faze.bmp')).convert('RGBA').resize((60, 40))
+        )
+        horn2 = ImageOps.mirror(
+            horn.copy().resize((130, 130)).rotate(350, resample=Image.BICUBIC)
+        )
+        hit = Image.open("assets/dank/hit.bmp").convert("RGBA").resize((40, 40))
+        gun = Image.open("assets/dank/gun.bmp").convert("RGBA").resize((250, 205))
+        faze = Image.open("assets/dank/faze.bmp").convert("RGBA").resize((60, 40))
 
-        blank = Image.new('RGBA', (256, 256), color=(254, 0, 0))
+        blank = Image.new("RGBA", (256, 256), color=(254, 0, 0))
         blank.paste(avatar, (-20, -20), avatar)
         # blank.paste(overlay, None, overlay)
         frames = []
@@ -48,7 +52,14 @@ class Dank(Endpoint):
             frames.append(base)
 
         b = BytesIO()
-        frames[0].save(b, save_all=True, append_images=frames[1:], format='gif', loop=0, duration=20,
-                       optimize=True)
+        frames[0].save(
+            b,
+            save_all=True,
+            append_images=frames[1:],
+            format="gif",
+            loop=0,
+            duration=20,
+            optimize=True,
+        )
         b.seek(0)
-        return send_file(b, mimetype='image/gif')
+        return send_file(b, mimetype="image/gif")

@@ -1,0 +1,58 @@
+name: build
+
+on:
+  push:
+    # Publish `master` as Docker `latest` image.
+    branches:
+      - master
+    paths-ignore:
+      - '**.md'
+    # Publish `v1.2.3` tags as releases.
+    tags:
+      - v*
+  repository_dispatch:
+    types:
+      - upstream_image_update
+
+jobs:
+  # Push image to GitHub Packages.
+  # See also https://docs.docker.com/docker-hub/builds/
+  docker:
+
+    runs-on: ubuntu-latest
+    env:
+      TITLE: Imgen
+      GHCR_SLUG: ghcr.io/lifeismana/imgen
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v1 
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      -
+        name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          target: latest
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ env.GHCR_SLUG }}:latest
+          cache-from: |
+            ${{ env.GHCR_SLUG }}:latest
+
+      -
+        name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }}
