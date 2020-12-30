@@ -4,10 +4,14 @@ FROM python:3.8 AS latest
 
 
 RUN set -eux; \
+    wget https://github.com/matomo-org/travis-scripts/blob/master/fonts/Verdana.ttf -O assets/crab/Verdana.ttf;\
     apt-get update; \
     apt-get install -y --no-install-recommends \
-        graphicsmagick ; \
+        graphicsmagick \
+        fonts-symbola \ 
         libmagickwand-dev ; \
+    # CrabRave needs this policy removed
+    sed -i '/@\*/d' /etc/ImageMagick-6/policy.xml; \
     rm -rf /var/lib/apt/lists/* ;
 
 WORKDIR /imgen
